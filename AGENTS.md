@@ -20,6 +20,7 @@ All API keys live on a Cloudflare Worker proxy — nothing sensitive ships in th
 - **Screen Capture**: ScreenCaptureKit (macOS 14.2+), multi-monitor support
 - **Voice Input**: Push-to-talk via `AVAudioEngine` + pluggable transcription-provider layer. System-wide keyboard shortcut via listen-only CGEvent tap.
 - **Element Pointing**: Claude embeds `[POINT:x,y:label:screenN]` tags in responses. The overlay parses these, maps coordinates to the correct monitor, and animates the blue cursor along a bezier arc to the target.
+- **OpenWork Context**: `OpenWorkContextProvider` reads a fixed, bounded subset of files from `references/openwork` and appends that local repo context to Clicky's Claude system prompt when available.
 - **Concurrency**: `@MainActor` isolation, async/await throughout
 - **Analytics**: PostHog via `ClickyAnalytics.swift`
 
@@ -74,11 +75,15 @@ Worker vars: `ELEVENLABS_VOICE_ID`
 | `ClickyAnalytics.swift` | ~121 | PostHog analytics integration for usage tracking. |
 | `WindowPositionManager.swift` | ~262 | Window placement logic, Screen Recording permission flow, and accessibility permission helpers. |
 | `AppBundleConfiguration.swift` | ~28 | Runtime configuration reader for keys stored in the app bundle Info.plist. |
+| `OpenWorkContextProvider.swift` | ~187 | Loads a predictable, bounded subset of the local OpenWork submodule and formats it as additional Claude prompt context for OpenWork-specific questions. |
 | `worker/src/index.ts` | ~142 | Cloudflare Worker proxy. Three routes: `/chat` (Claude), `/tts` (ElevenLabs), `/transcribe-token` (AssemblyAI temp token). |
 
 ## Build & Run
 
 ```bash
+# Initialize the OpenWork submodule used for local repo-aware prompt context
+git submodule update --init --depth 1 references/openwork
+
 # Open in Xcode
 open leanring-buddy.xcodeproj
 
@@ -89,6 +94,8 @@ open leanring-buddy.xcodeproj
 ```
 
 **Do NOT run `xcodebuild` from the terminal** — it invalidates TCC (Transparency, Consent, and Control) permissions and the app will need to re-request screen recording, accessibility, etc.
+
+The OpenWork submodule path defaults to `$(PROJECT_DIR)/references/openwork` via the `OpenWorkContextDirectoryPath` Info.plist key. Override that key only if your OpenWork checkout lives somewhere else.
 
 ## Cloudflare Worker
 
