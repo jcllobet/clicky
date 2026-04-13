@@ -41,7 +41,7 @@ If you want to do it yourself, here's the deal.
 
 ### 1. Initialize the OpenWork reference repo
 
-Clicky now reads a bounded set of OpenWork docs/config from a local git submodule so it can answer OpenWork-specific questions with repo context in addition to the screenshot.
+Clicky now reads a bounded set of OpenWork docs, routes, settings labels, and task-flow snippets from a local git submodule so it can answer OpenWork-specific questions with repo and navigation context in addition to the screenshot.
 
 ```bash
 git submodule update --init --depth 1 references/openwork
@@ -137,14 +137,14 @@ The app will appear in your menu bar (not the dock). Click the icon to open the 
 
 If you want the full technical breakdown, read `CLAUDE.md`. But here's the short version:
 
-**Menu bar app** (no dock icon) with two `NSPanel` windows — one for the control panel dropdown, one for the full-screen transparent cursor overlay. Push-to-talk streams audio over a websocket to AssemblyAI, sends the transcript + screenshot to Claude via streaming SSE, and plays the response through ElevenLabs TTS. Claude can embed `[POINT:x,y:label:screenN]` tags in its responses to make the cursor fly to specific UI elements across multiple monitors. When the local OpenWork checkout is available, Clicky also injects a bounded excerpt of key OpenWork docs/config into the Claude system prompt so it can explain OpenWork behavior and repo layout more accurately. All three APIs are proxied through a Cloudflare Worker.
+**Menu bar app** (no dock icon) with two `NSPanel` windows — one for the control panel dropdown, one for the full-screen transparent cursor overlay. Push-to-talk streams audio over a websocket to AssemblyAI, sends the transcript + screenshot to Claude via streaming SSE, and plays the response through ElevenLabs TTS. Claude can embed `[POINT:x,y:label:screenN]` tags in its responses to make the cursor fly to specific UI elements across multiple monitors. When the local OpenWork checkout is available, Clicky also injects a bounded excerpt of key OpenWork docs plus UI-navigation snippets into the Claude system prompt so it can explain OpenWork behavior, recognize common app surfaces like Settings or Skills, and guide users toward the next relevant click or Finder action. All three APIs are proxied through a Cloudflare Worker.
 
 ## Project structure
 
 ```
 leanring-buddy/          # Swift source (yes, the typo stays)
   CompanionManager.swift    # Central state machine
-  OpenWorkContextProvider.swift # Bounded local OpenWork repo context
+  OpenWorkContextProvider.swift # Bounded local OpenWork repo and navigation context
   CompanionPanelView.swift  # Menu bar panel UI
   ClaudeAPI.swift           # Claude streaming client
   ElevenLabsTTSClient.swift # Text-to-speech playback

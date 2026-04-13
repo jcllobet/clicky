@@ -20,7 +20,7 @@ All API keys live on a Cloudflare Worker proxy — nothing sensitive ships in th
 - **Screen Capture**: ScreenCaptureKit (macOS 14.2+), multi-monitor support
 - **Voice Input**: Push-to-talk via `AVAudioEngine` + pluggable transcription-provider layer. System-wide keyboard shortcut via listen-only CGEvent tap.
 - **Element Pointing**: Claude embeds `[POINT:x,y:label:screenN]` tags in responses. The overlay parses these, maps coordinates to the correct monitor, and animates the blue cursor along a bezier arc to the target.
-- **OpenWork Context**: `OpenWorkContextProvider` reads a fixed, bounded subset of files from `references/openwork` and appends that local repo context to Clicky's Claude system prompt when available.
+- **OpenWork Context**: `OpenWorkContextProvider` reads a fixed, bounded subset of OpenWork docs, UI route snippets, settings labels, and task-flow files from `references/openwork` and appends that local repo/navigation context to Clicky's Claude system prompt when available.
 - **Concurrency**: `@MainActor` isolation, async/await throughout
 - **Analytics**: PostHog via `ClickyAnalytics.swift`
 
@@ -75,7 +75,7 @@ Worker vars: `ELEVENLABS_VOICE_ID`
 | `ClickyAnalytics.swift` | ~121 | PostHog analytics integration for usage tracking. |
 | `WindowPositionManager.swift` | ~262 | Window placement logic, Screen Recording permission flow, and accessibility permission helpers. |
 | `AppBundleConfiguration.swift` | ~28 | Runtime configuration reader for keys stored in the app bundle Info.plist. |
-| `OpenWorkContextProvider.swift` | ~187 | Loads a predictable, bounded subset of the local OpenWork submodule and formats it as additional Claude prompt context for OpenWork-specific questions. |
+| `OpenWorkContextProvider.swift` | ~318 | Loads a predictable, bounded subset of the local OpenWork submodule and formats it as additional Claude prompt context for OpenWork-specific repo, navigation, onboarding, and file-access questions. |
 | `worker/src/index.ts` | ~142 | Cloudflare Worker proxy. Three routes: `/chat` (Claude), `/tts` (ElevenLabs), `/transcribe-token` (AssemblyAI temp token). |
 
 ## Build & Run
