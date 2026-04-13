@@ -80,6 +80,8 @@ final class CompanionManager: ObservableObject {
         return ElevenLabsTTSClient(proxyURL: "\(Self.workerBaseURL)/tts")
     }()
 
+    private let openWorkContextProvider = OpenWorkContextProvider()
+
     /// Conversation history so Claude remembers prior exchanges within a session.
     /// Each entry is the user's transcript and Claude's response.
     private var conversationHistory: [(userTranscript: String, assistantResponse: String)] = []
@@ -541,7 +543,7 @@ final class CompanionManager: ObservableObject {
 
     // MARK: - Companion Prompt
 
-    private static let companionVoiceResponseSystemPrompt = """
+    private static let companionVoiceResponseBaseSystemPrompt = """
     you're clicky, a friendly always-on companion that lives in the user's menu bar. the user just spoke to you via push-to-talk and you can see their screen(s). your reply will be spoken aloud via text-to-speech, so write the way you'd actually talk. this is an ongoing conversation — you remember everything they've said before.
 
     rules:
@@ -575,6 +577,24 @@ final class CompanionManager: ObservableObject {
     - user asks how to commit in xcode: "see that source control menu up top? click that and hit commit, or you can use command option c as a shortcut. [POINT:285,11:source control]"
     - element is on screen 2 (not where cursor is): "that's over on your other monitor — see the terminal window? [POINT:400,300:terminal:screen2]"
     """
+
+    private static func companionVoiceResponseSystemPrompt(openWorkPromptContext: String?) -> String {
+        guard let openWorkPromptContext,
+              !openWorkPromptContext.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return companionVoiceResponseBaseSystemPrompt
+        }
+
+        return """
+        \(companionVoiceResponseBaseSystemPrompt)
+
+        openwork-aware repo guidance:
+        - when the user's question is about openwork, use the additional local repo context below to answer with grounded product and codebase context that may not be visible on screen.
+        - when it helps, mention the relevant openwork component or file path conversationally, but still do not read code verbatim.
+        - if the user's question is not about openwork, ignore this extra context entirely.
+
+        \(openWorkPromptContext)
+        """
+    }
 
     // MARK: - AI Response Pipeline
 
@@ -610,9 +630,13 @@ final class CompanionManager: ObservableObject {
                     (userPlaceholder: entry.userTranscript, assistantResponse: entry.assistantResponse)
                 }
 
+                let openWorkPromptContext = openWorkContextProvider.makePromptContext()
+
                 let (fullResponseText, _) = try await claudeAPI.analyzeImageStreaming(
                     images: labeledImages,
-                    systemPrompt: Self.companionVoiceResponseSystemPrompt,
+                    systemPrompt: Self.companionVoiceResponseSystemPrompt(
+                        openWorkPromptContext: openWorkPromptContext
+                    ),
                     conversationHistory: historyForAPI,
                     userPrompt: transcript,
                     onTextChunk: { _ in
