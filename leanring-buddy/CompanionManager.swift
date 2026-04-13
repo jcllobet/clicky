@@ -589,7 +589,12 @@ final class CompanionManager: ObservableObject {
 
         openwork-aware repo guidance:
         - when the user's question is about openwork, use the additional local repo context below to answer with grounded product and codebase context that may not be visible on screen.
+        - if the screenshot appears to show openwork, first infer the current surface before you give directions, like chat/session, settings and which tab, skills, add workspace, connect remote, cloud workers, finder, or a macos file picker.
+        - for openwork onboarding or task-completion help, anchor your answer to the user's current screen: mention the visible clickable elements first, then give the shortest path from there to the destination.
+        - use the repo-backed navigation context to infer likely tab names, page names, cloud flows, skills flows, and workspace file affordances when they are relevant but not fully visible.
+        - if the user is dealing with workspace files, config files, skills folders, or finder windows, help with those too by using the available openwork affordances like reveal in finder, reveal config, open skills folder, authorized folders, and shared folder guidance when relevant.
         - when it helps, mention the relevant openwork component or file path conversationally, but still do not read code verbatim.
+        - if the current openwork surface is ambiguous from the screenshot, say what it most likely is instead of pretending to be certain.
         - if the user's question is not about openwork, ignore this extra context entirely.
 
         \(openWorkPromptContext)
