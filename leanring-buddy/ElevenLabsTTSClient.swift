@@ -31,6 +31,10 @@ final class ElevenLabsTTSClient {
     /// Sends `text` to ElevenLabs TTS and plays the resulting audio.
     /// Throws on network or decoding errors. Cancellation-safe.
     func speakText(_ text: String) async throws {
+        let textPreview = String(text.prefix(80))
+        print("🔊 ElevenLabs TTS: requesting speech for \"\(textPreview)\"...")
+        print("🔊 ElevenLabs TTS: proxy URL = \(proxyURL.absoluteString)")
+
         var request = URLRequest(url: proxyURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -46,16 +50,21 @@ final class ElevenLabsTTSClient {
         ]
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        print("🔊 ElevenLabs TTS: sending \(request.httpBody?.count ?? 0) byte request")
 
         let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
+            print("❌ ElevenLabs TTS: response is not HTTPURLResponse")
             throw NSError(domain: "ElevenLabsTTS", code: -1,
                           userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
         }
 
+        print("🔊 ElevenLabs TTS: HTTP \(httpResponse.statusCode), \(data.count) bytes, content-type: \(httpResponse.value(forHTTPHeaderField: "Content-Type") ?? "unknown")")
+
         guard (200...299).contains(httpResponse.statusCode) else {
             let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+            print("❌ ElevenLabs TTS: error response body: \(errorBody)")
             throw NSError(domain: "ElevenLabsTTS", code: httpResponse.statusCode,
                           userInfo: [NSLocalizedDescriptionKey: "TTS API error (\(httpResponse.statusCode)): \(errorBody)"])
         }
@@ -65,7 +74,7 @@ final class ElevenLabsTTSClient {
         let player = try AVAudioPlayer(data: data)
         self.audioPlayer = player
         player.play()
-        print("🔊 ElevenLabs TTS: playing \(data.count / 1024)KB audio")
+        print("🔊 ElevenLabs TTS: playing \(data.count / 1024)KB audio (\(player.duration.formatted(.number.precision(.fractionLength(1))))s)")
     }
 
     /// Whether TTS audio is currently playing back.
